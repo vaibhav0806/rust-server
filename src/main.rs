@@ -126,12 +126,35 @@ struct SendSolResponse {
     instruction_data: String,
 }
 
+// Add new response structs for send_token
+#[derive(Serialize)]
+struct SendTokenResponse {
+    program_id: String,
+    accounts: Vec<TokenAccountInfo>,
+    instruction_data: String,
+}
+
+#[derive(Serialize)]
+struct TokenAccountInfo {
+    pubkey: String,
+    #[serde(rename = "isSigner")]
+    is_signer: bool,
+}
+
 // Helper function to convert AccountMeta to AccountInfo
 fn account_meta_to_info(meta: &AccountMeta) -> AccountInfo {
     AccountInfo {
         pubkey: meta.pubkey.to_string(),
         is_signer: meta.is_signer,
         is_writable: meta.is_writable,
+    }
+}
+
+// Add helper function for send_token
+fn account_meta_to_token_info(meta: &AccountMeta) -> TokenAccountInfo {
+    TokenAccountInfo {
+        pubkey: meta.pubkey.to_string(),
+        is_signer: meta.is_signer,
     }
 }
 
@@ -339,11 +362,11 @@ async fn send_token(req: web::Json<SendTokenRequest>) -> ActixResult<HttpRespons
         req.amount,
     ).unwrap();
 
-    let accounts: Vec<AccountInfo> = instruction.accounts.iter()
-        .map(account_meta_to_info)
+    let accounts: Vec<TokenAccountInfo> = instruction.accounts.iter()
+        .map(account_meta_to_token_info)
         .collect();
 
-    let response = InstructionResponse {
+    let response = SendTokenResponse {
         program_id: instruction.program_id.to_string(),
         accounts,
         instruction_data: general_purpose::STANDARD.encode(&instruction.data),
