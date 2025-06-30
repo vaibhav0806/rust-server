@@ -118,6 +118,14 @@ struct AccountInfo {
     is_writable: bool,
 }
 
+// Add new response struct for send_sol
+#[derive(Serialize)]
+struct SendSolResponse {
+    program_id: String,
+    accounts: Vec<String>,
+    instruction_data: String,
+}
+
 // Helper function to convert AccountMeta to AccountInfo
 fn account_meta_to_info(meta: &AccountMeta) -> AccountInfo {
     AccountInfo {
@@ -285,11 +293,12 @@ async fn send_sol(req: web::Json<SendSolRequest>) -> ActixResult<HttpResponse> {
     // Create transfer instruction
     let instruction = system_instruction::transfer(&from, &to, req.lamports);
 
-    let accounts: Vec<AccountInfo> = instruction.accounts.iter()
-        .map(account_meta_to_info)
+    // Convert accounts to just addresses (strings)
+    let accounts: Vec<String> = instruction.accounts.iter()
+        .map(|meta| meta.pubkey.to_string())
         .collect();
 
-    let response = InstructionResponse {
+    let response = SendSolResponse {
         program_id: instruction.program_id.to_string(),
         accounts,
         instruction_data: general_purpose::STANDARD.encode(&instruction.data),
