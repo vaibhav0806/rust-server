@@ -170,6 +170,11 @@ async fn generate_keypair() -> ActixResult<HttpResponse> {
 }
 
 async fn create_token(req: web::Json<CreateTokenRequest>) -> ActixResult<HttpResponse> {
+    // Validate required fields are not empty
+    if req.mint_authority.is_empty() || req.mint.is_empty() {
+        return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Missing required fields".to_string())));
+    }
+
     // Parse the addresses
     let mint_authority = match Pubkey::from_str(&req.mint_authority) {
         Ok(pk) => pk,
@@ -204,6 +209,11 @@ async fn create_token(req: web::Json<CreateTokenRequest>) -> ActixResult<HttpRes
 }
 
 async fn mint_token(req: web::Json<MintTokenRequest>) -> ActixResult<HttpResponse> {
+    // Validate required fields are not empty
+    if req.mint.is_empty() || req.destination.is_empty() || req.authority.is_empty() {
+        return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Missing required fields".to_string())));
+    }
+
     let mint = match Pubkey::from_str(&req.mint) {
         Ok(pk) => pk,
         Err(_) => return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid mint address".to_string()))),
@@ -243,6 +253,11 @@ async fn mint_token(req: web::Json<MintTokenRequest>) -> ActixResult<HttpRespons
 }
 
 async fn sign_message(req: web::Json<SignMessageRequest>) -> ActixResult<HttpResponse> {
+    // Validate required fields are not empty
+    if req.message.is_empty() || req.secret.is_empty() {
+        return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Missing required fields".to_string())));
+    }
+
     // Decode the secret key
     let secret_bytes = match bs58::decode(&req.secret).into_vec() {
         Ok(bytes) => bytes,
@@ -268,6 +283,11 @@ async fn sign_message(req: web::Json<SignMessageRequest>) -> ActixResult<HttpRes
 }
 
 async fn verify_message(req: web::Json<VerifyMessageRequest>) -> ActixResult<HttpResponse> {
+    // Validate required fields are not empty
+    if req.message.is_empty() || req.signature.is_empty() || req.pubkey.is_empty() {
+        return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Missing required fields".to_string())));
+    }
+
     // Parse public key
     let pubkey = match Pubkey::from_str(&req.pubkey) {
         Ok(pk) => pk,
@@ -279,6 +299,11 @@ async fn verify_message(req: web::Json<VerifyMessageRequest>) -> ActixResult<Htt
         Ok(bytes) => bytes,
         Err(_) => return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid signature".to_string()))),
     };
+
+    // Check signature length
+    if signature_bytes.len() != 64 {
+        return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid signature format".to_string())));
+    }
 
     let signature = match Signature::try_from(signature_bytes.as_slice()) {
         Ok(sig) => sig,
@@ -299,6 +324,11 @@ async fn verify_message(req: web::Json<VerifyMessageRequest>) -> ActixResult<Htt
 }
 
 async fn send_sol(req: web::Json<SendSolRequest>) -> ActixResult<HttpResponse> {
+    // Validate required fields are not empty
+    if req.from.is_empty() || req.to.is_empty() {
+        return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Missing required fields".to_string())));
+    }
+
     let from = match Pubkey::from_str(&req.from) {
         Ok(pk) => pk,
         Err(_) => return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid from address".to_string()))),
@@ -331,6 +361,11 @@ async fn send_sol(req: web::Json<SendSolRequest>) -> ActixResult<HttpResponse> {
 }
 
 async fn send_token(req: web::Json<SendTokenRequest>) -> ActixResult<HttpResponse> {
+    // Validate required fields are not empty
+    if req.destination.is_empty() || req.mint.is_empty() || req.owner.is_empty() {
+        return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Missing required fields".to_string())));
+    }
+
     let destination = match Pubkey::from_str(&req.destination) {
         Ok(pk) => pk,
         Err(_) => return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid destination address".to_string()))),
