@@ -288,19 +288,19 @@ async fn verify_message(req: web::Json<VerifyMessageRequest>) -> ActixResult<Htt
         return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Missing required fields".to_string())));
     }
 
-    // Parse public key
+    // Parse public key (base58-encoded)
     let pubkey = match Pubkey::from_str(&req.pubkey) {
         Ok(pk) => pk,
         Err(_) => return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid public key".to_string()))),
     };
 
-    // Decode signature
+    // Decode signature (base64-encoded)
     let signature_bytes = match general_purpose::STANDARD.decode(&req.signature) {
         Ok(bytes) => bytes,
         Err(_) => return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid signature".to_string()))),
     };
 
-    // Check signature length
+    // Check signature length (should be 64 bytes for Ed25519)
     if signature_bytes.len() != 64 {
         return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid signature format".to_string())));
     }
@@ -310,7 +310,7 @@ async fn verify_message(req: web::Json<VerifyMessageRequest>) -> ActixResult<Htt
         Err(_) => return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid signature format".to_string()))),
     };
 
-    // Verify the signature
+    // Verify the signature - use the correct method
     let message_bytes = req.message.as_bytes();
     let is_valid = signature.verify(&pubkey.to_bytes(), message_bytes);
 
