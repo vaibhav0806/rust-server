@@ -343,6 +343,12 @@ async fn send_token(req: web::Json<SendTokenRequest>) -> ActixResult<HttpRespons
     Ok(HttpResponse::Ok().json(ApiResponse::success(response)))
 }
 
+// Fix: Remove async and make it synchronous
+fn json_error_handler(err: actix_web::error::JsonPayloadError, _req: &actix_web::HttpRequest) -> actix_web::error::Error {
+    let resp = HttpResponse::BadRequest().json(ApiResponse::<()>::error("Missing required fields".to_string()));
+    actix_web::error::InternalError::from_response(err, resp).into()
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
@@ -356,6 +362,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(Logger::default())
+            .app_data(
+                web::JsonConfig::default()
+                    .limit(4096)
+                    .error_handler(json_error_handler)
+            )
             .route("/keypair", web::post().to(generate_keypair))
             .route("/token/create", web::post().to(create_token))
             .route("/token/mint", web::post().to(mint_token))
