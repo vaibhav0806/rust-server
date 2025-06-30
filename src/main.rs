@@ -349,7 +349,7 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
     
     let port = env::var("PORT").unwrap_or("8080".to_string());
-    let bind_address = format!("127.0.0.1:{}", port);
+    let bind_address = format!("0.0.0.0:{}", port);
     
     println!("🚀 Solana HTTP Server starting at http://{}", bind_address);
     
